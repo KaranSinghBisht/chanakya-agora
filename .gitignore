@@ -1,0 +1,15 @@
+node_modules/
+.env
+dist/
+out/
+.next/
+cache/
+artifacts/
+typechain-types/
+coverage/
+.DS_Store
+*.log
+
+# Planning / memory files
+.omc/
+.claude/

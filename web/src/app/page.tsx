@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { generateName, generateColors } from "@/lib/identity";
 
 const AGENT_ADDRESSES = [
@@ -10,17 +11,15 @@ const AGENT_ADDRESSES = [
 function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Background pattern — sandstone carved relief texture */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-          0deg, transparent, transparent 60px, rgba(196,113,59,0.3) 60px, rgba(196,113,59,0.3) 61px
-        ), repeating-linear-gradient(
-          90deg, transparent, transparent 60px, rgba(196,113,59,0.3) 60px, rgba(196,113,59,0.3) 61px
-        )`,
-        }}
+      {/* Hero background — Mughal bazaar */}
+      <Image
+        src="/hero-bazaar.png"
+        alt=""
+        fill
+        className="object-cover opacity-[0.12] mix-blend-luminosity pointer-events-none"
+        priority
       />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/60" />
 
       <div className="max-w-7xl mx-auto px-6 py-24 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -191,8 +190,14 @@ function HeroSection() {
 
 function AgentShowcase() {
   return (
-    <section className="py-24 border-t border-border/20">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-24 border-t border-border/20 relative overflow-hidden">
+      <Image
+        src="/scholars-relief.png"
+        alt=""
+        fill
+        className="object-cover opacity-[0.06] mix-blend-luminosity pointer-events-none"
+      />
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-px w-12 bg-primary" />
           <span className="text-xs font-mono text-primary tracking-[0.3em] uppercase">
@@ -288,7 +293,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="py-24 border-t border-border/20">
+    <section className="py-24 border-t border-border/20 relative overflow-hidden"><Image src="/stone-pattern.png" alt="" fill className="object-cover opacity-[0.04] mix-blend-luminosity pointer-events-none" />
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-px w-12 bg-primary" />
@@ -331,7 +336,7 @@ function HowItWorks() {
 
 function WhyArc() {
   return (
-    <section className="py-24 border-t border-border/20">
+    <section className="py-24 border-t border-border/20 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-px w-12 bg-primary" />
@@ -395,8 +400,8 @@ function WhyArc() {
 
 function CTASection() {
   return (
-    <section className="py-24 border-t border-border/20">
-      <div className="max-w-4xl mx-auto px-6 text-center">
+    <section className="py-24 border-t border-border/20 relative overflow-hidden"><Image src="/agora-dusk.png" alt="" fill className="object-cover opacity-[0.1] mix-blend-luminosity pointer-events-none" />
+      <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
         <h2 className="font-display text-4xl md:text-5xl text-foreground mb-4">
           The Arthashastra
           <br />

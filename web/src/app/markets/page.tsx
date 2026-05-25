@@ -9,69 +9,37 @@ const AGENT_ADDRESSES = [
 
 const MOCK_MARKETS = [
   {
-    address: "0x1234...5678",
-    question: "Will BTC reach $120K before July 31, 2026?",
+    address: "0x4Fd015b1a00Ba2f83Edc920FA47fb880Cc0fB2dd",
+    question: "Will BTC reach $120,000 before July 31, 2026?",
     creatorAddress: AGENT_ADDRESSES[0],
     expiry: "July 31, 2026",
-    yesProb: 61,
-    noProb: 39,
-    totalVolume: "420.00",
+    yesProb: 66,
+    noProb: 34,
+    totalVolume: "1.18",
     takesCount: 3,
     state: "OPEN",
   },
   {
-    address: "0xabcd...ef01",
+    address: "0x8FfF00EfD9ddFc829ab1Fa8C2b475303e6194e59",
     question: "Will the Fed cut rates at the June 2026 FOMC meeting?",
     creatorAddress: AGENT_ADDRESSES[1],
-    expiry: "June 18, 2026",
-    yesProb: 38,
-    noProb: 62,
-    totalVolume: "310.00",
+    expiry: "June 14, 2026",
+    yesProb: 33,
+    noProb: 67,
+    totalVolume: "0.74",
     takesCount: 3,
     state: "OPEN",
   },
   {
-    address: "0x9876...5432",
-    question: "Will ETH flip BTC dominance above 20% by Q3 2026?",
+    address: "0xb87D9487a8630d4C1937BBC05E5A95a96bF297FC",
+    question:
+      "Will ETH market cap exceed 25% of BTC market cap before August 2026?",
     creatorAddress: AGENT_ADDRESSES[2],
-    expiry: "Sep 30, 2026",
-    yesProb: 29,
-    noProb: 71,
-    totalVolume: "185.00",
-    takesCount: 2,
-    state: "OPEN",
-  },
-  {
-    address: "0xdef0...1234",
-    question: "Will US CPI print below 3% for May 2026?",
-    creatorAddress: AGENT_ADDRESSES[0],
-    expiry: "June 11, 2026",
-    yesProb: 54,
-    noProb: 46,
-    totalVolume: "260.00",
+    expiry: "August 3, 2026",
+    yesProb: 23,
+    noProb: 77,
+    totalVolume: "0.64",
     takesCount: 3,
-    state: "OPEN",
-  },
-  {
-    address: "0x5678...abcd",
-    question: "Will Nvidia market cap exceed $4T before end of 2026?",
-    creatorAddress: AGENT_ADDRESSES[1],
-    expiry: "Dec 31, 2026",
-    yesProb: 47,
-    noProb: 53,
-    totalVolume: "195.00",
-    takesCount: 2,
-    state: "OPEN",
-  },
-  {
-    address: "0xef01...9876",
-    question: "Will there be a G7 consensus statement on crypto regulation by Aug 2026?",
-    creatorAddress: AGENT_ADDRESSES[2],
-    expiry: "Aug 31, 2026",
-    yesProb: 22,
-    noProb: 78,
-    totalVolume: "140.00",
-    takesCount: 2,
     state: "OPEN",
   },
 ];
@@ -135,11 +103,7 @@ function AgentAvatar({ address }: { address: string }) {
   );
 }
 
-function MarketCard({
-  market,
-}: {
-  market: (typeof MOCK_MARKETS)[number];
-}) {
+function MarketCard({ market }: { market: (typeof MOCK_MARKETS)[number] }) {
   const creatorName = generateName(market.creatorAddress);
   return (
     <Link
@@ -301,7 +265,9 @@ export default function MarketsPage() {
               key={item.step}
               className="sandstone-border rounded-lg bg-card p-6"
             >
-              <span className="text-xs font-mono text-primary">{item.step}</span>
+              <span className="text-xs font-mono text-primary">
+                {item.step}
+              </span>
               <h3 className="font-display text-lg mt-2 mb-2 text-foreground">
                 {item.title}
               </h3>

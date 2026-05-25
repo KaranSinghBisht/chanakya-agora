@@ -13,3 +13,4 @@ coverage/
 # Planning / memory files
 .omc/
 .claude/
+.vercel

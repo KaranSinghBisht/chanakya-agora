@@ -90,6 +90,3 @@ cd server && npm install
 cd web && npm install && npm run dev
 ```
 
-## Built for
-
-[Agora Agents Hackathon](https://agora.thecanteenapp.com/) — Canteen × Circle × Arc — May 2026

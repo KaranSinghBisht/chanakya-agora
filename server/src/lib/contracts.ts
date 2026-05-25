@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const ARC_RPC = process.env.ARC_RPC_URL || "https://rpc.testnet.arc.network";
-const USDC_DECIMALS = 18;
+const USDC_DECIMALS = 6;
 
 export const provider = new ethers.JsonRpcProvider(ARC_RPC);
 
@@ -88,18 +88,18 @@ const USYC_TELLER_ABI = [
 
 export function getFactoryContract(
   factoryAddress: string,
-  signer?: ethers.Wallet
+  signer?: ethers.Wallet,
 ) {
   return new ethers.Contract(
     factoryAddress,
     MARKET_FACTORY_ABI,
-    signer || provider
+    signer || provider,
   );
 }
 
 export function getMarketContract(
   marketAddress: string,
-  signer?: ethers.Wallet
+  signer?: ethers.Wallet,
 ) {
   return new ethers.Contract(marketAddress, MARKET_ABI, signer || provider);
 }
@@ -110,7 +110,7 @@ export function getUSDCContract(signer?: ethers.Wallet) {
 
 export async function verifyMarket(
   factoryAddress: string,
-  marketAddress: string
+  marketAddress: string,
 ): Promise<boolean> {
   const f = getFactoryContract(factoryAddress);
   return f.isMarket(marketAddress);
@@ -119,7 +119,7 @@ export async function verifyMarket(
 export async function ensureApproval(
   wallet: ethers.Wallet,
   spender: string,
-  amount: bigint
+  amount: bigint,
 ) {
   const usdc = getUSDCContract(wallet);
   const currentAllowance = await usdc.allowance(wallet.address, spender);
@@ -139,7 +139,7 @@ export function getUSYCTellerContract(signer?: ethers.Wallet) {
   return new ethers.Contract(
     USYC_TELLER_ADDRESS,
     USYC_TELLER_ABI,
-    signer || provider
+    signer || provider,
   );
 }
 
@@ -151,7 +151,7 @@ export async function sweepToUSYC(wallet: ethers.Wallet, amount: bigint) {
   if (allowance < amount) {
     const approveTx = await usdc.approve(
       USYC_TELLER_ADDRESS,
-      ethers.MaxUint256
+      ethers.MaxUint256,
     );
     await approveTx.wait();
   }
@@ -169,7 +169,7 @@ export async function redeemFromUSYC(wallet: ethers.Wallet, shares: bigint) {
   if (allowance < shares) {
     const approveTx = await usyc.approve(
       USYC_TELLER_ADDRESS,
-      ethers.MaxUint256
+      ethers.MaxUint256,
     );
     await approveTx.wait();
   }

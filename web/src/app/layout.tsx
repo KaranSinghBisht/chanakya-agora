@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,9 +25,13 @@ function Nav() {
     <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
-            <span className="text-primary font-bold text-sm">C</span>
-          </div>
+          <Image
+            src="/logo-icon.png"
+            alt="Chanakya"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
           <div>
             <span className="font-display text-xl tracking-tight text-foreground">
               Chanakya

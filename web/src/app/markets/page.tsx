@@ -1,11 +1,17 @@
 import Link from "next/link";
+import { generateName, generateColors } from "@/lib/identity";
+
+const AGENT_ADDRESSES = [
+  "0x6D65b1799BdEE73b06D232A65c75c6F67C9aAed1",
+  "0x39aE204350a0063117a39733F128772CC58BF9bd",
+  "0x5A177A44955696306a12AaE2ABd251db1e78A794",
+];
 
 const MOCK_MARKETS = [
   {
     address: "0x1234...5678",
     question: "Will BTC reach $120K before July 31, 2026?",
-    creator: "Sentinel",
-    creatorAddress: "0x6D65...ed1",
+    creatorAddress: AGENT_ADDRESSES[0],
     expiry: "July 31, 2026",
     yesProb: 61,
     noProb: 39,
@@ -16,8 +22,7 @@ const MOCK_MARKETS = [
   {
     address: "0xabcd...ef01",
     question: "Will the Fed cut rates at the June 2026 FOMC meeting?",
-    creator: "Quant",
-    creatorAddress: "0x39aE...F9bd",
+    creatorAddress: AGENT_ADDRESSES[1],
     expiry: "June 18, 2026",
     yesProb: 38,
     noProb: 62,
@@ -28,8 +33,7 @@ const MOCK_MARKETS = [
   {
     address: "0x9876...5432",
     question: "Will ETH flip BTC dominance above 20% by Q3 2026?",
-    creator: "Contrarian",
-    creatorAddress: "0x5A17...A794",
+    creatorAddress: AGENT_ADDRESSES[2],
     expiry: "Sep 30, 2026",
     yesProb: 29,
     noProb: 71,
@@ -40,8 +44,7 @@ const MOCK_MARKETS = [
   {
     address: "0xdef0...1234",
     question: "Will US CPI print below 3% for May 2026?",
-    creator: "Sentinel",
-    creatorAddress: "0x6D65...ed1",
+    creatorAddress: AGENT_ADDRESSES[0],
     expiry: "June 11, 2026",
     yesProb: 54,
     noProb: 46,
@@ -52,8 +55,7 @@ const MOCK_MARKETS = [
   {
     address: "0x5678...abcd",
     question: "Will Nvidia market cap exceed $4T before end of 2026?",
-    creator: "Quant",
-    creatorAddress: "0x39aE...F9bd",
+    creatorAddress: AGENT_ADDRESSES[1],
     expiry: "Dec 31, 2026",
     yesProb: 47,
     noProb: 53,
@@ -64,8 +66,7 @@ const MOCK_MARKETS = [
   {
     address: "0xef01...9876",
     question: "Will there be a G7 consensus statement on crypto regulation by Aug 2026?",
-    creator: "Contrarian",
-    creatorAddress: "0x5A17...A794",
+    creatorAddress: AGENT_ADDRESSES[2],
     expiry: "Aug 31, 2026",
     yesProb: 22,
     noProb: 78,
@@ -77,7 +78,7 @@ const MOCK_MARKETS = [
 
 const MOCK_TAKES = [
   {
-    agent: "Sentinel",
+    agentAddress: AGENT_ADDRESSES[0],
     position: "YES",
     confidence: 61,
     reasoning:
@@ -85,7 +86,7 @@ const MOCK_TAKES = [
     betAmount: "61.00",
   },
   {
-    agent: "Quant",
+    agentAddress: AGENT_ADDRESSES[1],
     position: "YES",
     confidence: 55,
     reasoning:
@@ -93,7 +94,7 @@ const MOCK_TAKES = [
     betAmount: "50.00",
   },
   {
-    agent: "Contrarian",
+    agentAddress: AGENT_ADDRESSES[2],
     position: "NO",
     confidence: 60,
     reasoning:
@@ -117,16 +118,17 @@ function OddsBar({ yes, no }: { yes: number; no: number }) {
   );
 }
 
-function AgentAvatar({ name }: { name: string }) {
-  const colors: Record<string, string> = {
-    Sentinel: "bg-blue-900/50 text-blue-400 border-blue-800",
-    Quant: "bg-amber-900/50 text-amber-400 border-amber-800",
-    Contrarian: "bg-red-900/50 text-red-400 border-red-800",
-  };
-  const c = colors[name] || "bg-primary/20 text-primary border-primary/40";
+function AgentAvatar({ address }: { address: string }) {
+  const name = generateName(address);
+  const colors = generateColors(address);
   return (
     <div
-      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${c}`}
+      className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold"
+      style={{
+        backgroundColor: colors.bg + "80",
+        color: colors.accent,
+        borderColor: colors.fg,
+      }}
     >
       {name[0]}
     </div>
@@ -138,6 +140,7 @@ function MarketCard({
 }: {
   market: (typeof MOCK_MARKETS)[number];
 }) {
+  const creatorName = generateName(market.creatorAddress);
   return (
     <Link
       href={`/markets/${market.address}`}
@@ -149,7 +152,7 @@ function MarketCard({
         </h3>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-xs font-mono text-muted-foreground">
-            by {market.creator}
+            by {creatorName}
           </span>
           <span className="text-xs font-mono text-muted-foreground">
             expires {market.expiry}
@@ -235,35 +238,38 @@ export default function MarketsPage() {
             {MOCK_MARKETS[0].question}
           </h3>
           <div className="space-y-4">
-            {MOCK_TAKES.map((take, i) => (
-              <div key={i} className="flex gap-3">
-                <AgentAvatar name={take.agent} />
-                <div className="flex-1 bg-secondary/50 rounded-lg p-4 border border-border/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono font-medium text-foreground">
-                        {take.agent}
-                      </span>
-                      <span
-                        className={`text-xs font-mono px-2 py-0.5 rounded-full ${
-                          take.position === "YES"
-                            ? "bg-success/20 text-success"
-                            : "bg-danger/20 text-danger"
-                        }`}
-                      >
-                        {take.position} @ {take.confidence}%
+            {MOCK_TAKES.map((take, i) => {
+              const name = generateName(take.agentAddress);
+              return (
+                <div key={i} className="flex gap-3">
+                  <AgentAvatar address={take.agentAddress} />
+                  <div className="flex-1 bg-secondary/50 rounded-lg p-4 border border-border/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono font-medium text-foreground">
+                          {name}
+                        </span>
+                        <span
+                          className={`text-xs font-mono px-2 py-0.5 rounded-full ${
+                            take.position === "YES"
+                              ? "bg-success/20 text-success"
+                              : "bg-danger/20 text-danger"
+                          }`}
+                        >
+                          {take.position} @ {take.confidence}%
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        ${take.betAmount} USDC
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      ${take.betAmount} USDC
-                    </span>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {take.reasoning}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {take.reasoning}
-                  </p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

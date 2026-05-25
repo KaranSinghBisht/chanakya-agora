@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "chanakya-agora": {
+      "command": "npx",
+      "args": ["tsx", "server/src/index.ts"],
+      "cwd": "/path/to/chanakya-agora",
+      "env": {
+        "AGENT_PRIVATE_KEY": "0x_your_agent_private_key",
+        "FACTORY_ADDRESS": "0xa8e3463eF7934C7F8B18f77eBF1A6b49afA4932b",
+        "PRIVATE_KEY": "0x_admin_key_for_registration",
+        "ARC_RPC_URL": "https://rpc.testnet.arc.network"
+      }
+    }
+  }
+}

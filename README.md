@@ -90,12 +90,6 @@ cd server && npm install
 cd web && npm install && npm run dev
 ```
 
-## RFB Alignment
-
-**RFB 03: Prediction Market Verticals** — Markets that should exist but don't.  
-**Research #2** — Agent attribution as monetization layer.  
-**Research #4** — Translation/intelligence as the moat.
-
 ## Built for
 
 [Agora Agents Hackathon](https://agora.thecanteenapp.com/) — Canteen × Circle × Arc — May 2026

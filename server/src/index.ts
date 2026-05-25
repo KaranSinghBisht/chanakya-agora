@@ -25,12 +25,15 @@ import {
   saveMessage,
   getMessages,
 } from "./lib/db.js";
+import { generateAgentName } from "./lib/identity.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const FACTORY_ADDRESS = process.env.FACTORY_ADDRESS || "";
 const AGENT_KEY = process.env.AGENT_PRIVATE_KEY || "";
+const ADMIN_KEY =
+  process.env.ADMIN_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
 const server = new McpServer({
   name: "chanakya-agora",
@@ -40,6 +43,24 @@ const server = new McpServer({
 function getAgentWallet() {
   if (!AGENT_KEY) throw new Error("AGENT_PRIVATE_KEY not set");
   return getWallet(AGENT_KEY);
+}
+
+async function ensureAgentRegistered() {
+  const wallet = getAgentWallet();
+  const f = factory();
+  const profile = await f.getAgent(wallet.address);
+  if (!profile.registered) {
+    const adminWallet = getWallet(ADMIN_KEY);
+    const adminFactory = factory(adminWallet);
+    const name = generateAgentName(wallet.address);
+    const tx = await adminFactory.registerAgent(
+      wallet.address,
+      name,
+      "Autonomous agent on Chanakya agora",
+    );
+    await tx.wait();
+    console.error(`Auto-registered agent: ${name} (${wallet.address})`);
+  }
 }
 
 function factory(signer?: ReturnType<typeof getWallet>) {
@@ -89,7 +110,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -160,7 +181,7 @@ server.tool(
         question,
         source_url,
         expiry_timestamp,
-        wallet.address
+        wallet.address,
       );
 
       let seedingNote = "";
@@ -184,7 +205,7 @@ server.tool(
             true,
             initial_probability,
             reasoning,
-            formatUSDC(yesAmount)
+            formatUSDC(yesAmount),
           );
           seedingNote = "Seeded with 2 USDC.";
         } catch (seedErr: any) {
@@ -208,7 +229,7 @@ server.tool(
                 seedingNote,
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -224,7 +245,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -269,7 +290,7 @@ server.tool(
         confidence,
         reasoning,
         amount,
-        tx.hash
+        tx.hash,
       );
 
       const [yesProb, noProb, total] = await market.getOdds();
@@ -291,7 +312,7 @@ server.tool(
                 totalVolume: formatUSDC(total),
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -304,7 +325,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -346,7 +367,7 @@ server.tool(
                 arcscan: `https://testnet.arcscan.app/tx/${tx.hash}`,
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -362,7 +383,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -415,7 +436,7 @@ server.tool(
                 recentMessages: agentMessages.slice(0, 10),
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -426,7 +447,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -480,7 +501,7 @@ server.tool(
                 debate: formattedTakes,
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -491,7 +512,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -535,7 +556,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -560,7 +581,7 @@ server.tool(
                 nativeBalance: formatUSDC(nativeBalance),
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -571,7 +592,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -606,7 +627,7 @@ server.tool(
                 note: "Earning Treasury yield. Redeem back to USDC when ready to bet.",
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -622,7 +643,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -655,7 +676,7 @@ server.tool(
                 note: "USDC ready for betting or payments.",
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -668,7 +689,7 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 server.tool(
@@ -696,7 +717,7 @@ server.tool(
                 note: "USYC earns ~4.5% APY. Redeem to USDC when you need to bet.",
               },
               null,
-              2
+              2,
             ),
           },
         ],
@@ -707,13 +728,22 @@ server.tool(
         isError: true,
       };
     }
-  }
+  },
 );
 
 async function main() {
+  if (AGENT_KEY && FACTORY_ADDRESS) {
+    try {
+      await ensureAgentRegistered();
+    } catch (e: any) {
+      console.error("Auto-registration skipped:", e.message);
+    }
+  }
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Chanakya MCP server running — 11 tools available");
+  const wallet = AGENT_KEY ? getAgentWallet() : null;
+  const name = wallet ? generateAgentName(wallet.address) : "unknown";
+  console.error(`Chanakya MCP server running — agent: ${name} — 11 tools`);
 }
 
 main().catch(console.error);

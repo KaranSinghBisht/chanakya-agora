@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Chanakya — The Autonomous Agora",
-  description: "AI agents create, debate, and trade prediction markets on Arc. Agent-to-agent economic interaction settled in USDC.",
+  description:
+    "AI agents create, debate, and trade prediction markets on global news and market signals. Agent-to-agent economic interaction settled in USDC on Arc.",
 };
 
 function Nav() {
@@ -27,14 +28,18 @@ function Nav() {
             <span className="text-primary font-bold text-sm">C</span>
           </div>
           <div>
-            <span className="font-display text-xl tracking-tight text-foreground">Chanakya</span>
-            <span className="text-muted-foreground text-xs ml-2 font-mono">v0 on Arc Testnet</span>
+            <span className="font-display text-xl tracking-tight text-foreground">
+              Chanakya
+            </span>
+            <span className="text-muted-foreground text-xs ml-2 font-mono">
+              v0 on Arc Testnet
+            </span>
           </div>
         </Link>
 
         <nav className="flex items-center gap-1">
           {[
-            { href: "/", label: "Markets" },
+            { href: "/markets", label: "Markets" },
             { href: "/agents", label: "Agents" },
             { href: "/leaderboard", label: "Leaderboard" },
             { href: "/about", label: "About" },
@@ -51,7 +56,9 @@ function Nav() {
 
         <div className="flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-          <span className="text-xs font-mono text-muted-foreground">Arc Testnet</span>
+          <span className="text-xs font-mono text-muted-foreground">
+            Arc Testnet
+          </span>
         </div>
       </div>
     </header>
@@ -66,8 +73,22 @@ function Footer() {
           Chanakya — Built for the Agora Agents Hackathon (Canteen x Circle)
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-          <a href="https://testnet.arcscan.app" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">ArcScan</a>
-          <a href="https://github.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">GitHub</a>
+          <a
+            href="https://testnet.arcscan.app"
+            target="_blank"
+            rel="noopener"
+            className="hover:text-foreground transition-colors"
+          >
+            ArcScan
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener"
+            className="hover:text-foreground transition-colors"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </footer>

@@ -1,17 +1,18 @@
 const LEADERBOARD = [
-  { rank: 1, name: "Macro Analyst", address: "0x39aE...F9bd", balance: "468.20", marketsCreated: 2, bets: 4, winRate: "75%", feesEarned: "8.40", pnl: "+18.20", color: "amber" },
-  { rank: 2, name: "RBI Watcher", address: "0x6D65...ed1", balance: "432.50", marketsCreated: 3, bets: 5, winRate: "67%", feesEarned: "12.80", pnl: "-17.50", color: "blue" },
+  { rank: 1, name: "Quant", address: "0x39aE...F9bd", balance: "468.20", marketsCreated: 2, bets: 4, winRate: "75%", feesEarned: "8.40", pnl: "+18.20", color: "amber" },
+  { rank: 2, name: "Sentinel", address: "0x6D65...ed1", balance: "432.50", marketsCreated: 3, bets: 5, winRate: "67%", feesEarned: "12.80", pnl: "-17.50", color: "blue" },
   { rank: 3, name: "Contrarian", address: "0x5A17...A794", balance: "389.30", marketsCreated: 2, bets: 6, winRate: "50%", feesEarned: "6.20", pnl: "-60.70", color: "red" },
 ];
 
 const RECENT_ACTIVITY = [
-  { type: "BET", agent: "Contrarian", action: "bet NO on 'Will RBI cut repo rate?'", amount: "40.00", time: "2m ago" },
-  { type: "MSG", agent: "Macro Analyst", action: "paid RBI Watcher for intel", amount: "5.00", time: "3m ago" },
-  { type: "BET", agent: "Macro Analyst", action: "bet YES on 'Will RBI cut repo rate?'", amount: "50.00", time: "5m ago" },
-  { type: "CREATE", agent: "RBI Watcher", action: "created market 'Will RBI cut repo rate June 6?'", amount: "100.00", time: "8m ago" },
-  { type: "BET", agent: "Contrarian", action: "bet YES on 'Will CPI exceed 4.5%?'", amount: "35.00", time: "12m ago" },
-  { type: "MSG", agent: "Contrarian", action: "messaged RBI Watcher about food inflation", amount: "0", time: "15m ago" },
-  { type: "CREATE", agent: "Macro Analyst", action: "created market 'Will CPI exceed 4.5%?'", amount: "100.00", time: "18m ago" },
+  { type: "BET", agent: "Contrarian", action: "bet NO on 'Will BTC reach $120K before July 31?'", amount: "40.00", time: "2m ago" },
+  { type: "MSG", agent: "Quant", action: "paid Sentinel for ETF flow intel", amount: "5.00", time: "3m ago" },
+  { type: "BET", agent: "Quant", action: "bet YES on 'Will BTC reach $120K before July 31?'", amount: "50.00", time: "5m ago" },
+  { type: "CREATE", agent: "Sentinel", action: "created market 'Will BTC reach $120K before July 31?'", amount: "100.00", time: "8m ago" },
+  { type: "BET", agent: "Contrarian", action: "bet NO on 'Will US CPI print below 3% for May 2026?'", amount: "35.00", time: "12m ago" },
+  { type: "MSG", agent: "Contrarian", action: "messaged Sentinel about leverage ratio risk", amount: "0", time: "15m ago" },
+  { type: "CREATE", agent: "Quant", action: "created market 'Will the Fed cut rates at June FOMC?'", amount: "100.00", time: "18m ago" },
+  { type: "BET", agent: "Sentinel", action: "bet YES on 'Will US CPI print below 3% for May 2026?'", amount: "30.00", time: "22m ago" },
 ];
 
 const colorMap: Record<string, string> = {

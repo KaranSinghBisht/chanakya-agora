@@ -3,14 +3,19 @@ pragma solidity ^0.8.24;
 
 import "./Market.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract MarketFactory is AccessControl {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant AGENT_ROLE = keccak256("AGENT_ROLE");
 
     address public immutable usdc;
+    address public immutable admin;
     uint256 public challengeWindow;
     address[] public markets;
     mapping(bytes32 => bool) public questionExists;
+    mapping(address => bool) public isMarket;
 
     struct AgentProfile {
         string name;
@@ -35,10 +40,11 @@ contract MarketFactory is AccessControl {
 
     event MarketCreated(address indexed market, address indexed agent, string question, bytes32 questionHash, uint256 expiry);
     event AgentRegistered(address indexed agent, string name, string specialty);
-    event MessageSent(address indexed from, address indexed to, string content, uint256 price);
+    event MessageSent(address indexed from, address indexed to, uint256 price);
 
     constructor(address _usdc, uint256 _challengeWindow) {
         usdc = _usdc;
+        admin = msg.sender;
         challengeWindow = _challengeWindow;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -63,30 +69,33 @@ contract MarketFactory is AccessControl {
 
     function createMarket(
         string calldata question,
-        bytes32 questionHash,
         string calldata sourceUrl,
         uint256 expiry
     ) external onlyRole(AGENT_ROLE) returns (address) {
-        require(!questionExists[questionHash], "DUPLICATE");
+        bytes32 qHash = keccak256(abi.encodePacked(question));
+        require(!questionExists[qHash], "DUPLICATE");
         require(expiry > block.timestamp, "EXPIRY_PAST");
 
-        questionExists[questionHash] = true;
+        questionExists[qHash] = true;
 
         Market market = new Market(
             usdc,
             msg.sender,
+            admin,
             question,
-            questionHash,
+            qHash,
             sourceUrl,
             expiry,
             challengeWindow
         );
 
-        markets.push(address(market));
+        address marketAddr = address(market);
+        markets.push(marketAddr);
+        isMarket[marketAddr] = true;
         agents[msg.sender].marketsCreated++;
 
-        emit MarketCreated(address(market), msg.sender, question, questionHash, expiry);
-        return address(market);
+        emit MarketCreated(marketAddr, msg.sender, question, qHash, expiry);
+        return marketAddr;
     }
 
     function sendMessage(
@@ -97,10 +106,6 @@ contract MarketFactory is AccessControl {
         require(agents[msg.sender].registered, "NOT_AGENT");
         require(agents[to].registered, "RECIPIENT_NOT_AGENT");
 
-        if (price > 0) {
-            IERC20(usdc).transferFrom(msg.sender, to, price);
-        }
-
         messages.push(Message({
             from: msg.sender,
             to: to,
@@ -109,7 +114,11 @@ contract MarketFactory is AccessControl {
             price: price
         }));
 
-        emit MessageSent(msg.sender, to, content, price);
+        if (price > 0) {
+            IERC20(usdc).safeTransferFrom(msg.sender, to, price);
+        }
+
+        emit MessageSent(msg.sender, to, price);
     }
 
     function getMarketsCount() external view returns (uint256) {
@@ -141,6 +150,7 @@ contract MarketFactory is AccessControl {
     }
 
     function getMessages(uint256 from, uint256 count) external view returns (Message[] memory) {
+        if (from >= messages.length) return new Message[](0);
         uint256 end = from + count;
         if (end > messages.length) end = messages.length;
         Message[] memory result = new Message[](end - from);

@@ -21,6 +21,7 @@ contract Market {
     IERC20 public immutable usdc;
     address public immutable factory;
     address public immutable creator;
+    address public immutable admin;
     string public question;
     bytes32 public questionHash;
     string public sourceUrl;
@@ -57,6 +58,7 @@ contract Market {
     constructor(
         address _usdc,
         address _creator,
+        address _admin,
         string memory _question,
         bytes32 _questionHash,
         string memory _sourceUrl,
@@ -66,6 +68,7 @@ contract Market {
         usdc = IERC20(_usdc);
         factory = msg.sender;
         creator = _creator;
+        admin = _admin;
         question = _question;
         questionHash = _questionHash;
         sourceUrl = _sourceUrl;
@@ -74,11 +77,12 @@ contract Market {
         state = State.OPEN;
     }
 
-    function placeBet(bool isYes, uint256 amount) external onlyState(State.OPEN) {
+    function _placeBet(address bettor, bool isYes, uint256 amount) internal {
+        require(state == State.OPEN, "WRONG_STATE");
         require(block.timestamp < expiry, "EXPIRED");
         require(amount > 0, "ZERO_AMOUNT");
 
-        usdc.safeTransferFrom(msg.sender, address(this), amount);
+        usdc.safeTransferFrom(bettor, address(this), amount);
 
         uint256 fee = (amount * AGENT_FEE_BPS) / 10000;
         uint256 net = amount - fee;
@@ -88,13 +92,17 @@ contract Market {
 
         if (isYes) {
             yesPool += net;
-            yesBets[msg.sender] += net;
+            yesBets[bettor] += net;
         } else {
             noPool += net;
-            noBets[msg.sender] += net;
+            noBets[bettor] += net;
         }
 
-        emit BetPlaced(msg.sender, isYes, net, fee);
+        emit BetPlaced(bettor, isYes, net, fee);
+    }
+
+    function placeBet(bool isYes, uint256 amount) external {
+        _placeBet(msg.sender, isYes, amount);
     }
 
     function postTake(
@@ -113,7 +121,7 @@ contract Market {
         }));
 
         if (betAmount > 0) {
-            this.placeBet(position, betAmount);
+            _placeBet(msg.sender, position, betAmount);
         }
 
         emit TakePosted(msg.sender, position, confidence, reasoning, betAmount);
@@ -121,6 +129,7 @@ contract Market {
 
     function proposeResolution(bool _outcome) external onlyState(State.OPEN) {
         require(block.timestamp >= expiry, "NOT_EXPIRED");
+        require(msg.sender == creator || msg.sender == admin, "NOT_AUTHORIZED");
         outcome = _outcome;
         proposedAt = block.timestamp;
         proposedBy = msg.sender;
@@ -136,12 +145,13 @@ contract Market {
 
     function dispute() external onlyState(State.PROPOSED) {
         require(block.timestamp < proposedAt + challengeWindow, "WINDOW_CLOSED");
+        require(yesBets[msg.sender] > 0 || noBets[msg.sender] > 0, "NO_STAKE");
         state = State.DISPUTED;
         emit Disputed(msg.sender);
     }
 
     function adminResolve(bool _outcome) external onlyState(State.DISPUTED) {
-        require(msg.sender == creator || msg.sender == factory, "NOT_ADMIN");
+        require(msg.sender == admin, "NOT_ADMIN");
         outcome = _outcome;
         state = State.RESOLVED;
         emit ResolutionFinalized(_outcome);

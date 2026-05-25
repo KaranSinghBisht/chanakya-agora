@@ -4,12 +4,27 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
 
 const USDC = "0x3600000000000000000000000000000000000000";
-const FUND_AMOUNT = ethers.parseUnits("500", 18); // 500 USDC per wallet
+const FUND_AMOUNT = ethers.parseUnits("4", 18); // 4 USDC per agent wallet
 
 const AGENTS = [
-  { key: process.env.AGENT1_PRIVATE_KEY!, address: process.env.AGENT1_ADDRESS!, name: "RBI Watcher", specialty: "Indian monetary policy and macroeconomics" },
-  { key: process.env.AGENT2_PRIVATE_KEY!, address: process.env.AGENT2_ADDRESS!, name: "Macro Analyst", specialty: "Quantitative macro strategy and cross-border correlations" },
-  { key: process.env.AGENT3_PRIVATE_KEY!, address: process.env.AGENT3_ADDRESS!, name: "Contrarian", specialty: "Skeptical devil's advocate and tail-risk analysis" },
+  {
+    key: process.env.AGENT1_PRIVATE_KEY!,
+    address: process.env.AGENT1_ADDRESS!,
+    name: "RBI Watcher",
+    specialty: "Indian monetary policy and macroeconomics",
+  },
+  {
+    key: process.env.AGENT2_PRIVATE_KEY!,
+    address: process.env.AGENT2_ADDRESS!,
+    name: "Macro Analyst",
+    specialty: "Quantitative macro strategy and cross-border correlations",
+  },
+  {
+    key: process.env.AGENT3_PRIVATE_KEY!,
+    address: process.env.AGENT3_ADDRESS!,
+    name: "Contrarian",
+    specialty: "Skeptical devil's advocate and tail-risk analysis",
+  },
 ];
 
 const USER_KEYS = [
@@ -39,7 +54,11 @@ async function main() {
   // 2. Register agents
   console.log("=== Registering Agents ===");
   for (const agent of AGENTS) {
-    const tx = await factory.registerAgent(agent.address, agent.name, agent.specialty);
+    const tx = await factory.registerAgent(
+      agent.address,
+      agent.name,
+      agent.specialty,
+    );
     await tx.wait();
     console.log(`Registered ${agent.name} (${agent.address})`);
   }
@@ -52,12 +71,12 @@ async function main() {
       value: FUND_AMOUNT,
     });
     await tx.wait();
-    console.log(`Funded ${agent.name} with 500 USDC`);
+    console.log(`Funded ${agent.name} with 4 USDC`);
   }
 
   // 4. Fund user wallets
   console.log("\n=== Funding User Wallets ===");
-  const userFund = ethers.parseUnits("100", 18);
+  const userFund = ethers.parseUnits("1", 18);
   for (let i = 0; i < USER_KEYS.length; i++) {
     const userWallet = new ethers.Wallet(USER_KEYS[i], ethers.provider);
     const tx = await deployer.sendTransaction({
@@ -65,12 +84,14 @@ async function main() {
       value: userFund,
     });
     await tx.wait();
-    console.log(`Funded User ${i + 1} (${userWallet.address}) with 100 USDC`);
+    console.log(`Funded User ${i + 1} (${userWallet.address}) with 1 USDC`);
   }
 
   console.log("\n=== DONE ===");
   console.log(`\nAdd to .env:\nFACTORY_ADDRESS=${factoryAddr}`);
-  console.log(`\nTotal USDC spent: ${ethers.formatUnits(FUND_AMOUNT * BigInt(AGENTS.length) + userFund * BigInt(USER_KEYS.length), 18)} USDC`);
+  console.log(
+    `\nTotal USDC spent: ${ethers.formatUnits(FUND_AMOUNT * BigInt(AGENTS.length) + userFund * BigInt(USER_KEYS.length), 18)} USDC`,
+  );
 }
 
 main().catch((error) => {

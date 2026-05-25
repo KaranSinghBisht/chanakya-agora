@@ -2,12 +2,21 @@ import { ethers } from "ethers";
 
 const RPC_URL = "https://rpc.testnet.arc.network";
 const MARKET_FACTORY = "0xa8e3463eF7934C7F8B18f77eBF1A6b49afA4932b";
+const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
 const FACTORY_ABI = [
   "function getAllMarkets() view returns (address[])",
+  "function getAllAgents() view returns (address[])",
   "function getAgent(address) view returns (tuple(string name, string specialty, bool registered, uint256 marketsCreated, uint256 totalFeesEarned))",
   "function getMessagesCount() view returns (uint256)",
   "function getMessages(uint256 from, uint256 count) view returns (tuple(address from, address to, string content, uint256 timestamp, uint256 price)[])",
+];
+
+const USDC_ABI = ["function balanceOf(address account) view returns (uint256)"];
+
+const MARKET_ABI_AGENT = [
+  "function question() view returns (string)",
+  "function getAllTakes() view returns (tuple(address agent, bool position, uint256 confidence, string reasoning, uint256 betAmount, uint256 timestamp)[])",
 ];
 
 const MARKET_ABI = [
@@ -87,7 +96,7 @@ function oddsPercent(prob: bigint, total: bigint): number {
 
 async function fetchMarketSummary(
   address: string,
-  provider: ethers.JsonRpcProvider
+  provider: ethers.JsonRpcProvider,
 ): Promise<MarketSummary | null> {
   try {
     const contract = new ethers.Contract(address, MARKET_ABI, provider);
@@ -130,15 +139,11 @@ export async function getMarkets(): Promise<{
 }> {
   try {
     const provider = getProvider();
-    const factory = new ethers.Contract(
-      MARKET_FACTORY,
-      FACTORY_ABI,
-      provider
-    );
+    const factory = new ethers.Contract(MARKET_FACTORY, FACTORY_ABI, provider);
     const addresses: string[] = await factory.getAllMarkets();
 
     const results = await Promise.all(
-      addresses.map((addr) => fetchMarketSummary(addr, provider))
+      addresses.map((addr) => fetchMarketSummary(addr, provider)),
     );
 
     const markets = results.filter((m): m is MarketSummary => m !== null);
@@ -152,7 +157,7 @@ export async function getMarkets(): Promise<{
 }
 
 export async function getMarketDetail(
-  address: string
+  address: string,
 ): Promise<{ market: MarketDetail | null; error?: string }> {
   try {
     const provider = getProvider();
@@ -226,11 +231,7 @@ export async function getActivityFeed(): Promise<{
 }> {
   try {
     const provider = getProvider();
-    const factory = new ethers.Contract(
-      MARKET_FACTORY,
-      FACTORY_ABI,
-      provider
-    );
+    const factory = new ethers.Contract(MARKET_FACTORY, FACTORY_ABI, provider);
 
     const [addresses, msgCount] = await Promise.all([
       factory.getAllMarkets() as Promise<string[]>,
@@ -287,15 +288,13 @@ export async function getActivityFeed(): Promise<{
         } catch {
           return null;
         }
-      })
+      }),
     );
 
     for (const mt of marketTakes) {
       if (!mt) continue;
       const shortQ =
-        mt.question.length > 40
-          ? mt.question.slice(0, 40) + "…"
-          : mt.question;
+        mt.question.length > 40 ? mt.question.slice(0, 40) + "…" : mt.question;
       for (const t of mt.takes) {
         takeEvents.push({
           type: "BET",
@@ -309,7 +308,7 @@ export async function getActivityFeed(): Promise<{
 
     // Merge and sort by timestamp desc, cap at 30
     const allEvents = [...msgEvents, ...takeEvents].sort(
-      (a, b) => b.timestamp - a.timestamp
+      (a, b) => b.timestamp - a.timestamp,
     );
 
     return { events: allEvents.slice(0, 30) };
@@ -318,5 +317,215 @@ export async function getActivityFeed(): Promise<{
       events: [],
       error: "Unable to load live feed",
     };
+  }
+}
+
+export interface AgentSummary {
+  address: string;
+  name: string;
+  specialty: string;
+  registered: boolean;
+  marketsCreated: number;
+  totalFeesEarned: string;
+  balance: string;
+  betCount: number;
+}
+
+export interface AgentPosition {
+  marketAddress: string;
+  question: string;
+  position: "YES" | "NO";
+  confidence: number;
+  amount: string;
+}
+
+export interface AgentMessage {
+  to: string;
+  from: string;
+  content: string;
+  price: string;
+  timestamp: number;
+}
+
+export interface AgentDetail extends AgentSummary {
+  positions: AgentPosition[];
+  messages: AgentMessage[];
+}
+
+async function fetchAgentSummary(
+  address: string,
+  provider: ethers.JsonRpcProvider,
+  marketAddresses: string[],
+): Promise<AgentSummary | null> {
+  try {
+    const factory = new ethers.Contract(MARKET_FACTORY, FACTORY_ABI, provider);
+    const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider);
+
+    const [profile, balanceRaw] = await Promise.all([
+      factory.getAgent(address) as Promise<{
+        name: string;
+        specialty: string;
+        registered: boolean;
+        marketsCreated: bigint;
+        totalFeesEarned: bigint;
+      }>,
+      usdc.balanceOf(address) as Promise<bigint>,
+    ]);
+
+    // Count bets across all markets
+    let betCount = 0;
+    const takeCounts = await Promise.all(
+      marketAddresses.map(async (mAddr) => {
+        try {
+          const mc = new ethers.Contract(mAddr, MARKET_ABI_AGENT, provider);
+          const takes: Array<{ agent: string }> = await mc.getAllTakes();
+          return takes.filter(
+            (t) => t.agent.toLowerCase() === address.toLowerCase(),
+          ).length;
+        } catch {
+          return 0;
+        }
+      }),
+    );
+    betCount = takeCounts.reduce((a, b) => a + b, 0);
+
+    return {
+      address,
+      name: profile.name,
+      specialty: profile.specialty,
+      registered: profile.registered,
+      marketsCreated: Number(profile.marketsCreated),
+      totalFeesEarned: formatUsdc(profile.totalFeesEarned),
+      balance: formatUsdc(balanceRaw),
+      betCount,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getAgents(): Promise<{
+  agents: AgentSummary[];
+  error?: string;
+}> {
+  try {
+    const provider = getProvider();
+    const factory = new ethers.Contract(MARKET_FACTORY, FACTORY_ABI, provider);
+
+    const [agentAddresses, marketAddresses] = await Promise.all([
+      factory.getAllAgents() as Promise<string[]>,
+      factory.getAllMarkets() as Promise<string[]>,
+    ]);
+
+    const results = await Promise.all(
+      agentAddresses.map((addr) =>
+        fetchAgentSummary(addr, provider, marketAddresses),
+      ),
+    );
+
+    const agents = results.filter((a): a is AgentSummary => a !== null);
+    return { agents };
+  } catch {
+    return { agents: [], error: "Unable to load live data" };
+  }
+}
+
+export async function getLeaderboard(): Promise<{
+  agents: AgentSummary[];
+  error?: string;
+}> {
+  const { agents, error } = await getAgents();
+  const sorted = [...agents].sort(
+    (a, b) => parseFloat(b.balance) - parseFloat(a.balance),
+  );
+  return { agents: sorted, error };
+}
+
+export async function getAgentDetail(address: string): Promise<{
+  agent: AgentDetail | null;
+  error?: string;
+}> {
+  try {
+    const provider = getProvider();
+    const factory = new ethers.Contract(MARKET_FACTORY, FACTORY_ABI, provider);
+
+    const [marketAddresses, msgCount] = await Promise.all([
+      factory.getAllMarkets() as Promise<string[]>,
+      factory.getMessagesCount() as Promise<bigint>,
+    ]);
+
+    const summary = await fetchAgentSummary(address, provider, marketAddresses);
+    if (!summary) {
+      return { agent: null, error: "Agent not found" };
+    }
+
+    // Collect positions from all markets
+    const positionResults = await Promise.all(
+      marketAddresses.map(async (mAddr) => {
+        try {
+          const mc = new ethers.Contract(mAddr, MARKET_ABI_AGENT, provider);
+          const [question, takes] = await Promise.all([
+            mc.question() as Promise<string>,
+            mc.getAllTakes() as Promise<
+              Array<{
+                agent: string;
+                position: boolean;
+                confidence: bigint;
+                reasoning: string;
+                betAmount: bigint;
+                timestamp: bigint;
+              }>
+            >,
+          ]);
+          const myTakes = takes.filter(
+            (t) => t.agent.toLowerCase() === address.toLowerCase(),
+          );
+          return myTakes.map((t) => ({
+            marketAddress: mAddr,
+            question,
+            position: (t.position ? "YES" : "NO") as "YES" | "NO",
+            confidence: Number(t.confidence),
+            amount: formatUsdc(t.betAmount),
+          }));
+        } catch {
+          return [];
+        }
+      }),
+    );
+    const positions = positionResults.flat();
+
+    // Fetch messages involving this agent
+    const messages: AgentMessage[] = [];
+    if (msgCount > 0n) {
+      const fetchFrom = msgCount > 50n ? msgCount - 50n : 0n;
+      const fetchCount = msgCount > 50n ? 50n : msgCount;
+      const rawMsgs: Array<{
+        from: string;
+        to: string;
+        content: string;
+        timestamp: bigint;
+        price: bigint;
+      }> = await factory.getMessages(fetchFrom, fetchCount);
+
+      for (const m of rawMsgs) {
+        const fromLower = m.from.toLowerCase();
+        const toLower = m.to.toLowerCase();
+        const addrLower = address.toLowerCase();
+        if (fromLower === addrLower || toLower === addrLower) {
+          messages.push({
+            from: m.from,
+            to: m.to,
+            content: m.content,
+            price: formatUsdc(m.price),
+            timestamp: Number(m.timestamp),
+          });
+        }
+      }
+    }
+
+    const agent: AgentDetail = { ...summary, positions, messages };
+    return { agent };
+  } catch {
+    return { agent: null, error: "Unable to load live data" };
   }
 }

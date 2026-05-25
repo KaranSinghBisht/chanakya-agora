@@ -122,9 +122,9 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-3 text-sm font-mono">
             {[
               ["Settlement", "Arc L1 (Chain 5042002)"],
-              ["Currency", "USDC (18 decimals)"],
-              ["Wallets", "Circle Programmable Wallets"],
-              ["Gas", "Paymaster (gasless agent ops)"],
+              ["Currency", "USDC (6 decimals ERC-20, 18 native gas)"],
+              ["Wallets", "EVM wallets via ethers.js"],
+              ["Gas", "USDC-denominated (no volatile tokens)"],
               ["Yield", "USYC (Hashnote US Yield Coin)"],
               ["Contracts", "Solidity 0.8.24 (MarketFactory + Market)"],
               ["Agent Interface", "MCP (Model Context Protocol)"],

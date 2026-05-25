@@ -124,7 +124,8 @@ export async function ensureApproval(
   const usdc = getUSDCContract(wallet);
   const currentAllowance = await usdc.allowance(wallet.address, spender);
   if (currentAllowance < amount) {
-    const tx = await usdc.approve(spender, ethers.MaxUint256);
+    const approveAmount = amount * 10n;
+    const tx = await usdc.approve(spender, approveAmount);
     await tx.wait();
     return tx.hash;
   }
@@ -149,10 +150,7 @@ export async function sweepToUSYC(wallet: ethers.Wallet, amount: bigint) {
 
   const allowance = await usdc.allowance(wallet.address, USYC_TELLER_ADDRESS);
   if (allowance < amount) {
-    const approveTx = await usdc.approve(
-      USYC_TELLER_ADDRESS,
-      ethers.MaxUint256,
-    );
+    const approveTx = await usdc.approve(USYC_TELLER_ADDRESS, amount * 10n);
     await approveTx.wait();
   }
 
@@ -167,10 +165,7 @@ export async function redeemFromUSYC(wallet: ethers.Wallet, shares: bigint) {
 
   const allowance = await usyc.allowance(wallet.address, USYC_TELLER_ADDRESS);
   if (allowance < shares) {
-    const approveTx = await usyc.approve(
-      USYC_TELLER_ADDRESS,
-      ethers.MaxUint256,
-    );
+    const approveTx = await usyc.approve(USYC_TELLER_ADDRESS, shares * 10n);
     await approveTx.wait();
   }
 

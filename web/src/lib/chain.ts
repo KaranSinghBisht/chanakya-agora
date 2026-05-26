@@ -25,6 +25,8 @@ const MARKET_ABI = [
   "function expiry() view returns (uint256)",
   "function state() view returns (uint8)",
   "function creator() view returns (address)",
+  "function yesPool() view returns (uint256)",
+  "function noPool() view returns (uint256)",
   "function getOdds() view returns (uint256 yesProb, uint256 noProb, uint256 total)",
   "function getAllTakes() view returns (tuple(address agent, bool position, uint256 confidence, string reasoning, uint256 betAmount, uint256 timestamp)[])",
   "function getTakesCount() view returns (uint256)",
@@ -89,9 +91,8 @@ function formatUsdc(raw: bigint): string {
   return ethers.formatUnits(raw, 6);
 }
 
-function oddsPercent(prob: bigint, total: bigint): number {
-  if (total === 0n) return 50;
-  return Math.round((Number(prob) * 100) / Number(total));
+function percent(raw: bigint): number {
+  return Math.max(0, Math.min(100, Number(raw)));
 }
 
 async function fetchMarketSummary(
@@ -111,8 +112,8 @@ async function fetchMarketSummary(
       ]);
 
     const [yesProb, noProb, total] = odds;
-    const yesP = oddsPercent(yesProb, total);
-    const noP = 100 - yesP;
+    const yesP = percent(yesProb);
+    const noP = percent(noProb);
 
     // total volume = sum of all bets; approximated from pools via total
     const totalVolume = formatUsdc(total);
@@ -163,13 +164,25 @@ export async function getMarketDetail(
     const provider = getProvider();
     const contract = new ethers.Contract(address, MARKET_ABI, provider);
 
-    const [question, sourceUrl, expiry, stateRaw, creator, odds, rawTakes] =
+    const [
+      question,
+      sourceUrl,
+      expiry,
+      stateRaw,
+      creator,
+      yesPool,
+      noPool,
+      odds,
+      rawTakes,
+    ] =
       await Promise.all([
         contract.question() as Promise<string>,
         contract.sourceUrl() as Promise<string>,
         contract.expiry() as Promise<bigint>,
         contract.state() as Promise<bigint>,
         contract.creator() as Promise<string>,
+        contract.yesPool() as Promise<bigint>,
+        contract.noPool() as Promise<bigint>,
         contract.getOdds() as Promise<[bigint, bigint, bigint]>,
         contract.getAllTakes() as Promise<
           Array<{
@@ -184,12 +197,8 @@ export async function getMarketDetail(
       ]);
 
     const [yesProb, noProb, total] = odds;
-    const yesP = oddsPercent(yesProb, total);
-    const noP = 100 - yesP;
-
-    // Derive pool sizes from odds + total
-    const yesBig = total === 0n ? 0n : (yesProb * total) / (yesProb + noProb);
-    const noBig = total === 0n ? 0n : total - yesBig;
+    const yesP = percent(yesProb);
+    const noP = percent(noProb);
 
     const takes: Take[] = rawTakes.map((t) => ({
       agent: t.agent,
@@ -208,8 +217,8 @@ export async function getMarketDetail(
       expiry: formatExpiry(expiry),
       yesProb: yesP,
       noProb: noP,
-      yesPool: formatUsdc(yesBig),
-      noPool: formatUsdc(noBig),
+      yesPool: formatUsdc(yesPool),
+      noPool: formatUsdc(noPool),
       totalVolume: formatUsdc(total),
       takesCount: takes.length,
       state: STATE_LABELS[Number(stateRaw)] ?? "OPEN",

@@ -1,4 +1,4 @@
-import { generateName, generateAvatarSvg, generateColors, shortenAddress } from "@/lib/identity";
+import { generateName, generateAvatarSvg } from "@/lib/identity";
 import { getMarketDetail } from "@/lib/chain";
 import Link from "next/link";
 

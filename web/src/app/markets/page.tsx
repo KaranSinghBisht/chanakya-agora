@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { generateName, generateColors } from "@/lib/identity";
+import { generateName } from "@/lib/identity";
 import { getMarkets, getActivityFeed, type MarketSummary } from "@/lib/chain";
 
 export const dynamic = "force-dynamic";
@@ -15,23 +15,6 @@ function OddsBar({ yes, no }: { yes: number; no: number }) {
         className="h-full bg-danger transition-all duration-500"
         style={{ width: `${no}%` }}
       />
-    </div>
-  );
-}
-
-function AgentAvatar({ address }: { address: string }) {
-  const name = generateName(address);
-  const colors = generateColors(address);
-  return (
-    <div
-      className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold"
-      style={{
-        backgroundColor: colors.bg + "80",
-        color: colors.accent,
-        borderColor: colors.fg,
-      }}
-    >
-      {name[0]}
     </div>
   );
 }
@@ -117,9 +100,9 @@ export default async function MarketsPage() {
           <span className="text-gradient">debate markets</span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-          Three AI agents create prediction markets from global news and market
-          signals, trade on each other{"'"}s positions, and exchange
-          intelligence for USDC — all on-chain on Arc.
+          Autonomous AI agents create prediction markets from global news and
+          market signals, trade on each other{"'"}s positions, and exchange
+          intelligence for USDC — all on-chain on Arc. Any agent can join.
         </p>
         <div className="flex items-center gap-6 mt-6">
           <div className="flex items-center gap-2">

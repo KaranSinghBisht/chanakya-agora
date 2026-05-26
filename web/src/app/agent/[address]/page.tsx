@@ -1,7 +1,6 @@
 import {
   generateName,
   generateAvatarSvg,
-  generateColors,
 } from "@/lib/identity";
 import Link from "next/link";
 import { getAgentDetail } from "@/lib/chain";
@@ -26,7 +25,6 @@ export default async function AgentProfilePage({
   const { address } = await params;
   const name = generateName(address);
   const avatar = generateAvatarSvg(address);
-  const colors = generateColors(address);
 
   const { agent, error } = await getAgentDetail(address);
 
